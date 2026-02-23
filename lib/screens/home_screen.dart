@@ -16,6 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Guardamos qué categoría está marcada y llamamos a la API
   String categoriaSeleccionada = 'Todos';
   final ApiService _apiService = ApiService();
+  int _indiceActual = 0; // Para manejar el menú lateral en escritorio
 
   @override
   Widget build(BuildContext context) {
@@ -40,60 +41,99 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Container(
-            // Si es PC, el contenido no se estira infinito, se queda en 1200px
-            constraints: BoxConstraints(
-              maxWidth: esEscritorio ? 1200 : double.infinity,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildBuscador(), // El buscador de arriba
-                const Padding(
-                  padding: EdgeInsets.all(15),
-                  child: Text(
-                    'Categorías',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+      // Usamos un Row para separar el menú lateral del contenido en PC
+      body: Row(
+        children: [
+          // SI ES ESCRITORIO, MOSTRAR MENÚ LATERAL
+          if (esEscritorio)
+            NavigationRail(
+              selectedIndex: _indiceActual,
+              onDestinationSelected: (int index) {
+                setState(() => _indiceActual = index);
+                if (index == 1) Navigator.pushNamed(context, 'perfil');
+              },
+              labelType: NavigationRailLabelType.all,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: Text('Inicio'),
                 ),
-                _buildBarraCategorias(librosProv), // Los botones de filtros
-                // Título dinámico según la categoría elegida
-                Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Text(
-                    categoriaSeleccionada == 'Todos'
-                        ? 'Libros Populares'
-                        : 'Libros de $categoriaSeleccionada',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                // Lista de libros que cambian con el filtro
-                _crearListaLibros(
-                  librosProv.cargando,
-                  librosProv.librosPopulares,
-                ),
-
-                const Padding(
-                  padding: EdgeInsets.all(15),
-                  child: Text(
-                    'Añadidos recientemente',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                // Lista de libros nuevos (esta no cambia con el filtro)
-                _crearListaLibros(
-                  librosProv.cargando,
-                  librosProv.librosRecientes,
+                NavigationRailDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: Text('Perfil'),
                 ),
               ],
             ),
+
+          // CONTENIDO PRINCIPAL
+          Expanded(
+            child: SingleChildScrollView(
+              child: Center(
+                child: Container(
+                  // Si es PC, el contenido no se estira infinito, se queda en 1200px
+                  constraints: BoxConstraints(
+                    maxWidth: esEscritorio ? 1200 : double.infinity,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBuscador(), // El buscador de arriba
+                      const Padding(
+                        padding: EdgeInsets.all(15),
+                        child: Text(
+                          'Categorías',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      _buildBarraCategorias(
+                        librosProv,
+                      ), // Los botones de filtros
+                      // Título dinámico según la categoría elegida
+                      Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Text(
+                          categoriaSeleccionada == 'Todos'
+                              ? 'Libros Populares'
+                              : 'Libros de $categoriaSeleccionada',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      // Lista de libros que cambian con el filtro
+                      _crearListaLibros(
+                        librosProv.cargando,
+                        librosProv.librosPopulares,
+                      ),
+
+                      const Padding(
+                        padding: EdgeInsets.all(15),
+                        child: Text(
+                          'Añadidos recientemente',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      // Lista de libros nuevos (esta no cambia con el filtro)
+                      _crearListaLibros(
+                        librosProv.cargando,
+                        librosProv.librosRecientes,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
